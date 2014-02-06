@@ -1,11 +1,17 @@
 package ualberta.cmput301.camerademo;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+
 import ualberta.cmput301.camerodemo.R;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.View;
@@ -18,6 +24,8 @@ public class CameraDemoActivity extends Activity {
 	private TextView textView;
 	private ImageButton imageButton;
 	private Uri imageFileUri;
+	private File des;
+	private String imagePath;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -26,6 +34,12 @@ public class CameraDemoActivity extends Activity {
 		// Retrieve handlers
 		textView = (TextView) findViewById(R.id.status);
 		imageButton = (ImageButton) findViewById(R.id.image);
+		
+		imagePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/temp/img.jpg";
+		des = new File(imagePath);
+		des.mkdir();
+	
+		
 		
 		// Set up the listener
 		OnClickListener listener = new OnClickListener() {
@@ -45,6 +59,7 @@ public class CameraDemoActivity extends Activity {
 	public void takeAPhoto() {
 		// To Do
 		Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+		intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(des));
 		startActivityForResult(intent,0);
 	}
 	
@@ -52,12 +67,24 @@ public class CameraDemoActivity extends Activity {
 		// To Do
 		if(requestCode == 0){
 			if(resultCode == RESULT_OK){
-				Bitmap bm = (Bitmap) data.getExtras().getParcelable("data");
-				bm = Bitmap.createScaledBitmap(bm, imageButton.getWidth(), imageButton.getHeight(), false);
-				imageButton.setImageBitmap(bm);
-				textView.setText("Photo OK");
+				try{
+				 FileInputStream in = new FileInputStream(des);
+	             BitmapFactory.Options options = new BitmapFactory.Options();
+	             options.inSampleSize = 1;
+	             Bitmap bm = BitmapFactory.decodeStream(in, null, options);
+	             imageButton.setImageBitmap(bm);
+	             
+				/*
+				
+				*bm = Bitmap.createScaledBitmap(bm, imageButton.getWidth(), imageButton.getHeight(), false);
+				*imageButton.setImageBitmap(bm);
+				*/
+				textView.setText("Photo OK" + imagePath);
+				}catch (FileNotFoundException e) {
+	                e.printStackTrace();
+	            }
 			}else if(resultCode == RESULT_CANCELED){
-				textView.setText("Photo Canceled");
+				textView.setText("Photo Canceled" + imagePath);
 			}else{
 				textView.setText("Not sure what happened.");
 			}
